@@ -17,7 +17,10 @@ impl MaxFlowProblemApp {
         let (_response, mut painter) =
             ui.allocate_painter(ui.available_size_before_wrap(), egui::Sense::click());
 
-        render_graph(&mut painter);
+        render_graph(
+            &mut painter,
+            vec![vec![0], vec![1, 2, 3], vec![4, 5], vec![6]],
+        );
     }
 
     fn parameters_view(&mut self, ui: &mut egui::Ui) {

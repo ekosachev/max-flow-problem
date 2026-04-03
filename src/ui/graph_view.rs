@@ -2,13 +2,14 @@ use eframe::egui;
 
 const LAYER_MARGIN: f32 = 5.0;
 
-pub fn render_graph(painter: &mut egui::Painter) {
+pub fn render_graph(painter: &mut egui::Painter, vertices: Vec<Vec<usize>>) {
     let clip_rect = painter.clip_rect();
-    let layer_rects = calculate_layer_rects(&clip_rect, 5);
+    let layer_rects = calculate_layer_rects(&clip_rect, vertices.len());
 
     layer_rects.iter().enumerate().for_each(|(i, r)| {
         render_layer_box(painter, *r);
         render_layer_label(painter, *r, i);
+        render_layer_vertices(painter, *r, &vertices[i]);
     });
 }
 
@@ -47,5 +48,27 @@ fn render_layer_label(painter: &mut egui::Painter, rect: egui::Rect, idx: usize)
         format!("Layer {}", idx),
         egui::FontId::monospace(15.0),
         egui::Color32::DARK_GRAY,
+    );
+}
+
+fn render_layer_vertices(painter: &mut egui::Painter, rect: egui::Rect, vertices: &[usize]) {
+    let rect_top = rect.center_top();
+    let vertex_spacing = rect.height() / (vertices.len() as f32 + 1.0);
+
+    vertices.iter().enumerate().for_each(|(i, v)| {
+        let position = rect_top + egui::Vec2::new(0.0, vertex_spacing * (i as f32 + 1.0));
+        render_vertex(painter, position, *v);
+    });
+}
+
+fn render_vertex(painter: &mut egui::Painter, position: egui::Pos2, idx: usize) {
+    painter.circle_filled(position, 20.0, egui::Color32::DARK_GRAY);
+
+    painter.text(
+        position,
+        egui::Align2::CENTER_CENTER,
+        idx.to_string(),
+        egui::FontId::monospace(20.0),
+        egui::Color32::WHITE,
     );
 }
