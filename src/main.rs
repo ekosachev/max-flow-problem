@@ -1,6 +1,7 @@
 use crate::app::MaxFlowProblemApp;
 
 mod app;
+mod ui;
 
 fn main() {
     let native_options = eframe::NativeOptions::default();
