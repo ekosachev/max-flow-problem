@@ -1,9 +1,11 @@
 use eframe::{App, egui};
 
-use crate::ui::graph_view::render_graph;
+use crate::ui::graph_view::GraphWindow;
 
 #[derive(Default)]
-pub struct MaxFlowProblemApp;
+pub struct MaxFlowProblemApp {
+    graph_view: GraphWindow,
+}
 
 impl App for MaxFlowProblemApp {
     fn ui(&mut self, ui: &mut eframe::egui::Ui, _frame: &mut eframe::Frame) {
@@ -17,7 +19,7 @@ impl MaxFlowProblemApp {
         let (_response, mut painter) =
             ui.allocate_painter(ui.available_size_before_wrap(), egui::Sense::click());
 
-        render_graph(
+        self.graph_view.render_graph(
             &mut painter,
             vec![vec![0], vec![1, 2, 3], vec![4, 5], vec![6]],
             vec![
