@@ -20,6 +20,16 @@ impl MaxFlowProblemApp {
         render_graph(
             &mut painter,
             vec![vec![0], vec![1, 2, 3], vec![4, 5], vec![6]],
+            vec![
+                [0, 2, 1],
+                [0, 1, 1],
+                [2, 3, 1],
+                [2, 6, 1],
+                [1, 4, 1],
+                [3, 5, 1],
+                [4, 5, 1],
+                [5, 6, 1],
+            ],
         );
     }
 
