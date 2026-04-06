@@ -11,10 +11,13 @@ pub struct GraphWindow {
 impl GraphWindow {
     pub fn render_graph(
         &mut self,
-        painter: &mut egui::Painter,
+        ui: &mut egui::Ui,
+        size: egui::Vec2,
         vertices: Vec<Vec<usize>>,
         edges: Vec<[usize; 3]>,
     ) {
+        let (_response, mut painter) = ui.allocate_painter(size, egui::Sense::click());
+
         let clip_rect = painter.clip_rect();
         self.layer_rects = self.calculate_layer_rects(&clip_rect, vertices.len());
         self.vertex_positions = self
@@ -25,10 +28,10 @@ impl GraphWindow {
             .collect();
 
         self.layer_rects.iter().enumerate().for_each(|(i, _r)| {
-            self.render_layer_box(painter, i);
-            self.render_layer_label(painter, i);
-            self.render_edges(painter, &vertices[i], &edges);
-            self.render_layer_vertices(painter, &vertices[i]);
+            self.render_layer_box(&mut painter, i);
+            self.render_layer_label(&mut painter, i);
+            self.render_edges(&mut painter, &vertices[i], &edges);
+            self.render_layer_vertices(&mut painter, &vertices[i]);
         });
     }
 

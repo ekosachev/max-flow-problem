@@ -78,11 +78,10 @@ impl App for MaxFlowProblemApp {
 
 impl MaxFlowProblemApp {
     fn graph_view(&mut self, ui: &mut egui::Ui) {
-        let (_response, mut painter) =
-            ui.allocate_painter(ui.available_size_before_wrap(), egui::Sense::click());
-
+        let graph_size = ui.available_size_before_wrap();
         self.graph_view.render_graph(
-            &mut painter,
+            ui,
+            graph_size,
             self.global_state.graph_layers(),
             self.global_state.graph_edges(),
         );
