@@ -1,10 +1,72 @@
-use eframe::{App, egui};
+use std::collections::HashSet;
+
+use eframe::{App, egui, wgpu::naga::front};
 
 use crate::ui::graph_view::GraphWindow;
 
 #[derive(Default)]
 pub struct MaxFlowProblemApp {
+    global_state: GlobalState,
     graph_view: GraphWindow,
+}
+
+struct GlobalState {
+    constraint_matrix: Vec<Vec<usize>>,
+}
+
+impl Default for GlobalState {
+    fn default() -> Self {
+        Self {
+            constraint_matrix: vec![
+                vec![0, 1, 4, 0],
+                vec![0, 0, 0, 3],
+                vec![0, 0, 0, 3],
+                vec![0, 0, 0, 0],
+            ],
+        }
+    }
+}
+
+impl GlobalState {
+    pub fn graph_layers(&self) -> Vec<Vec<usize>> {
+        let mut layers: Vec<Vec<usize>> = vec![];
+        let mut frontier = HashSet::<usize>::new();
+        frontier.insert(0);
+
+        loop {
+            layers.push(frontier.drain().collect());
+
+            layers.last().unwrap().iter().for_each(|u| {
+                self.constraint_matrix[*u as usize]
+                    .iter()
+                    .enumerate()
+                    .filter(|(_v, c)| **c > 0)
+                    .for_each(|(v, _c)| {
+                        frontier.insert(v);
+                    })
+            });
+
+            if frontier.is_empty() {
+                break;
+            }
+        }
+
+        layers
+    }
+
+    pub fn graph_edges(&self) -> Vec<[usize; 3]> {
+        self.constraint_matrix
+            .iter()
+            .enumerate()
+            .flat_map(|(u, row)| {
+                row.iter()
+                    .enumerate()
+                    .skip(u)
+                    .filter_map(|(v, c)| if *c == 0 { None } else { Some([u, v, *c]) })
+                    .collect::<Vec<[usize; 3]>>()
+            })
+            .collect()
+    }
 }
 
 impl App for MaxFlowProblemApp {
@@ -21,17 +83,8 @@ impl MaxFlowProblemApp {
 
         self.graph_view.render_graph(
             &mut painter,
-            vec![vec![0], vec![1, 2, 3], vec![4, 5], vec![6]],
-            vec![
-                [0, 2, 1],
-                [0, 1, 1],
-                [2, 3, 1],
-                [2, 6, 1],
-                [1, 4, 1],
-                [3, 5, 1],
-                [4, 5, 1],
-                [5, 6, 1],
-            ],
+            self.global_state.graph_layers(),
+            self.global_state.graph_edges(),
         );
     }
 
