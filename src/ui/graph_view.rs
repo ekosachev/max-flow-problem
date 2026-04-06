@@ -1,6 +1,7 @@
 use eframe::egui;
 
 const LAYER_MARGIN: f32 = 5.0;
+const NODE_SIZE: f32 = 20.0;
 
 #[derive(Default)]
 pub struct GraphWindow {
@@ -98,7 +99,7 @@ impl GraphWindow {
     }
 
     fn render_vertex(&self, painter: &mut egui::Painter, position: egui::Pos2, idx: usize) {
-        painter.circle_filled(position, 20.0, egui::Color32::DARK_GRAY);
+        painter.circle_filled(position, NODE_SIZE, egui::Color32::DARK_GRAY);
 
         painter.text(
             position,
