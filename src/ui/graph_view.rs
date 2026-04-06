@@ -35,8 +35,25 @@ impl GraphWindow {
             self.render_layer_vertices(&mut painter, &vertices[i]);
         });
 
+        let click_pos = if response.secondary_clicked() {
+            response.hover_pos()
+        } else {
+            None
+        };
+
         response.context_menu(|ui| {
-            ui.label("Context menu");
+            let origin_pos = click_pos.unwrap_or(ui.min_rect().left_top());
+            if let Some(active_vertex) = self
+                .vertex_positions
+                .iter()
+                .position(|p| origin_pos.distance(*p) < NODE_SIZE)
+            {
+                let _ = ui.button(format!("Add edge from {}", active_vertex));
+            } else if let Some(active_layer) =
+                self.layer_rects.iter().position(|r| r.contains(origin_pos))
+            {
+                let _ = ui.button(format!("Add node to layer {}", active_layer));
+            }
         });
     }
 
