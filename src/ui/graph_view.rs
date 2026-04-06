@@ -23,12 +23,22 @@ impl GraphWindow {
 
         let clip_rect = painter.clip_rect();
         self.layer_rects = self.calculate_layer_rects(&clip_rect, vertices.len());
-        self.vertex_positions = self
-            .layer_rects
-            .iter()
-            .enumerate()
-            .flat_map(|(i, _r)| self.calculate_vertex_positions(i, &vertices[i]))
+        let layer_map = (0..vertices.iter().flatten().count())
+            .map(|i| vertices.iter().position(|l| l.contains(&i)).unwrap())
+            .collect::<Vec<usize>>();
+
+        let total_vertices: usize = vertices.iter().map(|l| l.len()).sum();
+
+        self.vertex_positions = (0..total_vertices)
+            .map(|v| {
+                let layer = layer_map[v];
+                let position = vertices[layer].iter().position(|u| *u == v).unwrap();
+                self.calculate_vertex_position(layer, position, vertices[layer].len())
+            })
             .collect();
+
+        ui.debug_text(format!("{:?}", layer_map));
+        ui.debug_text(format!("{:?}", self.vertex_positions));
 
         self.layer_rects.iter().enumerate().for_each(|(i, _r)| {
             self.render_layer_box(&mut painter, i);
@@ -47,6 +57,8 @@ impl GraphWindow {
 
         response.context_menu(|ui| {
             let origin_pos = click_pos.unwrap_or(ui.min_rect().left_top());
+
+            #[allow(clippy::collapsible_if)]
             if let Some(active_vertex) = self
                 .vertex_positions
                 .iter()
@@ -111,16 +123,17 @@ impl GraphWindow {
         );
     }
 
-    fn calculate_vertex_positions(&self, rect_idx: usize, vertices: &[usize]) -> Vec<egui::Pos2> {
+    fn calculate_vertex_position(
+        &self,
+        rect_idx: usize,
+        vertex_idx: usize,
+        vertices_in_layer: usize,
+    ) -> egui::Pos2 {
         let rect = &self.layer_rects[rect_idx];
         let rect_top = rect.center_top();
-        let vertex_spacing = rect.height() / (vertices.len() as f32 + 1.0);
+        let vertex_spacing = rect.height() / (vertices_in_layer as f32 + 1.0);
 
-        vertices
-            .iter()
-            .enumerate()
-            .map(|(i, _v)| rect_top + egui::Vec2::new(0.0, vertex_spacing * (i as f32 + 1.0)))
-            .collect()
+        rect_top + egui::Vec2::new(0.0, vertex_spacing * (vertex_idx as f32 + 1.0))
     }
 
     fn render_layer_vertices(&self, painter: &mut egui::Painter, vertices: &[usize]) {

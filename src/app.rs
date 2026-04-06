@@ -39,7 +39,7 @@ impl GlobalState {
         frontier.insert(0);
 
         loop {
-            layers.push(frontier.drain().collect());
+            layers.push(frontier.drain().collect::<Vec<usize>>());
 
             layers.last().unwrap().iter().for_each(|u| {
                 self.constraint_matrix[*u]
@@ -56,6 +56,7 @@ impl GlobalState {
             }
         }
 
+        layers.iter_mut().for_each(|l| l.sort());
         layers
     }
 
@@ -91,6 +92,8 @@ impl GlobalState {
 
         self.constraint_matrix
             .push(vec![0; self.constraint_matrix.len() + 1]);
+
+        println!("{:?}", self.graph_layers());
     }
 }
 
