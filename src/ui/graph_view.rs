@@ -116,14 +116,21 @@ impl GraphWindow {
                     painter,
                     self.vertex_positions[e[0]],
                     self.vertex_positions[e[1]],
+                    e[2] as f32,
                 );
             });
     }
 
-    fn render_edge(&self, painter: &mut egui::Painter, start_pos: egui::Pos2, end_pos: egui::Pos2) {
+    fn render_edge(
+        &self,
+        painter: &mut egui::Painter,
+        start_pos: egui::Pos2,
+        end_pos: egui::Pos2,
+        thickness: f32,
+    ) {
         painter.line_segment(
             [start_pos, end_pos],
-            egui::Stroke::new(2.0, egui::Color32::DARK_GRAY),
+            egui::Stroke::new(thickness, egui::Color32::DARK_GRAY),
         );
     }
 }

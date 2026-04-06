@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use eframe::{App, egui, wgpu::naga::front};
+use eframe::{App, egui};
 
 use crate::ui::graph_view::GraphWindow;
 
@@ -37,7 +37,7 @@ impl GlobalState {
             layers.push(frontier.drain().collect());
 
             layers.last().unwrap().iter().for_each(|u| {
-                self.constraint_matrix[*u as usize]
+                self.constraint_matrix[*u]
                     .iter()
                     .enumerate()
                     .filter(|(_v, c)| **c > 0)
