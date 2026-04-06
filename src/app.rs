@@ -8,10 +8,15 @@ use crate::ui::graph_view::GraphWindow;
 pub struct MaxFlowProblemApp {
     global_state: GlobalState,
     graph_view: GraphWindow,
+    action: Option<Action>,
 }
 
 struct GlobalState {
     constraint_matrix: Vec<Vec<usize>>,
+}
+
+pub enum Action {
+    AddNodeToLayer(usize),
 }
 
 impl Default for GlobalState {
@@ -67,6 +72,26 @@ impl GlobalState {
             })
             .collect()
     }
+
+    pub fn add_node_to_layer(&mut self, layer_id: usize) {
+        if layer_id == 0 {
+            return;
+        }
+
+        let layers = self.graph_layers();
+
+        let parent = layers[layer_id - 1][0];
+
+        self.constraint_matrix
+            .iter_mut()
+            .enumerate()
+            .for_each(|(u, outbound_capacities)| {
+                outbound_capacities.push(if u != parent { 0 } else { 1 })
+            });
+
+        self.constraint_matrix
+            .push(vec![0; self.constraint_matrix.len() + 1]);
+    }
 }
 
 impl App for MaxFlowProblemApp {
@@ -74,12 +99,20 @@ impl App for MaxFlowProblemApp {
         egui::Panel::bottom("parameters").show_inside(ui, |ui| self.parameters_view(ui));
         egui::CentralPanel::default().show_inside(ui, |ui| self.graph_view(ui));
     }
+
+    fn logic(&mut self, _ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if let Some(action) = &self.action {
+            match action {
+                Action::AddNodeToLayer(layer_id) => self.global_state.add_node_to_layer(*layer_id),
+            }
+        }
+    }
 }
 
 impl MaxFlowProblemApp {
     fn graph_view(&mut self, ui: &mut egui::Ui) {
         let graph_size = ui.available_size_before_wrap();
-        self.graph_view.render_graph(
+        self.action = self.graph_view.render_graph(
             ui,
             graph_size,
             self.global_state.graph_layers(),

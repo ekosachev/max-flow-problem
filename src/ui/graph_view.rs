@@ -1,5 +1,7 @@
 use eframe::egui;
 
+use crate::app::Action;
+
 const LAYER_MARGIN: f32 = 5.0;
 const NODE_SIZE: f32 = 20.0;
 
@@ -16,7 +18,7 @@ impl GraphWindow {
         size: egui::Vec2,
         vertices: Vec<Vec<usize>>,
         edges: Vec<[usize; 3]>,
-    ) {
+    ) -> Option<Action> {
         let (response, mut painter) = ui.allocate_painter(size, egui::Sense::click());
 
         let clip_rect = painter.clip_rect();
@@ -41,6 +43,8 @@ impl GraphWindow {
             None
         };
 
+        let mut action: Option<Action> = None;
+
         response.context_menu(|ui| {
             let origin_pos = click_pos.unwrap_or(ui.min_rect().left_top());
             if let Some(active_vertex) = self
@@ -48,13 +52,23 @@ impl GraphWindow {
                 .iter()
                 .position(|p| origin_pos.distance(*p) < NODE_SIZE)
             {
-                let _ = ui.button(format!("Add edge from {}", active_vertex));
+                if ui
+                    .button(format!("Add edge from {}", active_vertex))
+                    .clicked()
+                {}
             } else if let Some(active_layer) =
                 self.layer_rects.iter().position(|r| r.contains(origin_pos))
             {
-                let _ = ui.button(format!("Add node to layer {}", active_layer));
+                if ui
+                    .button(format!("Add node to layer {}", active_layer))
+                    .clicked()
+                {
+                    action = Some(Action::AddNodeToLayer(active_layer))
+                }
             }
         });
+
+        action
     }
 
     fn calculate_layer_rects(&self, painter_rect: &egui::Rect, layers: usize) -> Vec<egui::Rect> {
