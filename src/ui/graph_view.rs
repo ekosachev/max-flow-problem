@@ -9,6 +9,8 @@ const NODE_SIZE: f32 = 20.0;
 pub struct GraphWindow {
     layer_rects: Vec<egui::Rect>,
     vertex_positions: Vec<egui::Pos2>,
+    hovered_node: Option<usize>,
+    creating_edge_from_node: Option<usize>,
 }
 
 impl GraphWindow {
@@ -24,7 +26,7 @@ impl GraphWindow {
         let clip_rect = painter.clip_rect();
         self.layer_rects = self.calculate_layer_rects(&clip_rect, vertices.len());
         let layer_map = (0..vertices.iter().flatten().count())
-            .map(|i| vertices.iter().position(|l| l.contains(&i)).unwrap())
+            .map(|i| vertices.iter().position(|l| l.contains(&i)).unwrap_or(0))
             .collect::<Vec<usize>>();
 
         let total_vertices: usize = vertices.iter().map(|l| l.len()).sum();
@@ -32,7 +34,7 @@ impl GraphWindow {
         self.vertex_positions = (0..total_vertices)
             .map(|v| {
                 let layer = layer_map[v];
-                let position = vertices[layer].iter().position(|u| *u == v).unwrap();
+                let position = vertices[layer].iter().position(|u| *u == v).unwrap_or(0);
                 self.calculate_vertex_position(layer, position, vertices[layer].len())
             })
             .collect();
@@ -50,8 +52,31 @@ impl GraphWindow {
             None
         };
 
-        let mut action: Option<Action> = None;
+        if let Some(hover_pos) = response.hover_pos() {
+            self.hovered_node = self
+                .vertex_positions
+                .iter()
+                .position(|p| p.distance(hover_pos) <= NODE_SIZE);
 
+            if let Some(edge_from_node) = self.creating_edge_from_node {
+                painter.line_segment(
+                    [hover_pos, self.vertex_positions[edge_from_node]],
+                    egui::Stroke::new(2.0, egui::Color32::RED),
+                );
+
+                if response.clicked() {
+                    if let Some(hovered_node) = self.hovered_node {
+                        let action = Action::AddEdge(edge_from_node, hovered_node);
+                        self.creating_edge_from_node = None;
+                        return Some(action);
+                    } else {
+                        self.creating_edge_from_node = None;
+                    }
+                }
+            }
+        }
+
+        let mut context_menu_action = None;
         response.context_menu(|ui| {
             let origin_pos = click_pos.unwrap_or(ui.min_rect().left_top());
 
@@ -64,7 +89,9 @@ impl GraphWindow {
                 if ui
                     .button(format!("Add edge from {}", active_vertex))
                     .clicked()
-                {}
+                {
+                    self.creating_edge_from_node = Some(active_vertex);
+                }
             } else if let Some(active_layer) =
                 self.layer_rects.iter().position(|r| r.contains(origin_pos))
             {
@@ -72,12 +99,12 @@ impl GraphWindow {
                     .button(format!("Add node to layer {}", active_layer))
                     .clicked()
                 {
-                    action = Some(Action::AddNodeToLayer(active_layer))
+                    context_menu_action = Some(Action::AddNodeToLayer(active_layer));
                 }
             }
         });
 
-        action
+        context_menu_action
     }
 
     fn calculate_layer_rects(&self, painter_rect: &egui::Rect, layers: usize) -> Vec<egui::Rect> {

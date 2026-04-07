@@ -17,6 +17,7 @@ struct GlobalState {
 
 pub enum Action {
     AddNodeToLayer(usize),
+    AddEdge(usize, usize),
 }
 
 impl Default for GlobalState {
@@ -39,7 +40,7 @@ impl GlobalState {
         frontier.insert(0);
 
         loop {
-            layers.push(frontier.drain().collect::<Vec<usize>>());
+            layers.push(frontier.drain().collect());
 
             layers.last().unwrap().iter().for_each(|u| {
                 self.constraint_matrix[*u]
@@ -55,8 +56,21 @@ impl GlobalState {
                 break;
             }
         }
-
         layers.iter_mut().for_each(|l| l.sort());
+
+        let mut seen = Vec::new();
+
+        layers.iter_mut().rev().for_each(|l| {
+            l.retain(|&v| {
+                if seen.contains(&v) {
+                    false
+                } else {
+                    seen.push(v);
+                    true
+                }
+            })
+        });
+
         layers
     }
 
@@ -67,7 +81,6 @@ impl GlobalState {
             .flat_map(|(u, row)| {
                 row.iter()
                     .enumerate()
-                    .skip(u)
                     .filter_map(|(v, c)| if *c == 0 { None } else { Some([u, v, *c]) })
                     .collect::<Vec<[usize; 3]>>()
             })
@@ -93,6 +106,22 @@ impl GlobalState {
         self.constraint_matrix
             .push(vec![0; self.constraint_matrix.len() + 1]);
     }
+
+    pub fn add_edge(&mut self, u: usize, v: usize) {
+        if u.max(v) > self.constraint_matrix.len() {
+            // if nodes are out of range (for whatever
+            // reason)
+            return;
+        }
+
+        if self.constraint_matrix[u][v].max(self.constraint_matrix[v][u]) != 0 {
+            // if there is
+            // already an edge
+            return;
+        }
+
+        self.constraint_matrix[u][v] = 1;
+    }
 }
 
 impl App for MaxFlowProblemApp {
@@ -105,6 +134,7 @@ impl App for MaxFlowProblemApp {
         if let Some(action) = &self.action {
             match action {
                 Action::AddNodeToLayer(layer_id) => self.global_state.add_node_to_layer(*layer_id),
+                Action::AddEdge(u, v) => self.global_state.add_edge(*u, *v),
             }
         }
     }
