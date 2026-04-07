@@ -92,8 +92,6 @@ impl GlobalState {
 
         self.constraint_matrix
             .push(vec![0; self.constraint_matrix.len() + 1]);
-
-        println!("{:?}", self.graph_layers());
     }
 }
 

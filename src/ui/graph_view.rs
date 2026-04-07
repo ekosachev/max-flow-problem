@@ -37,9 +37,6 @@ impl GraphWindow {
             })
             .collect();
 
-        ui.debug_text(format!("{:?}", layer_map));
-        ui.debug_text(format!("{:?}", self.vertex_positions));
-
         self.layer_rects.iter().enumerate().for_each(|(i, _r)| {
             self.render_layer_box(&mut painter, i);
             self.render_layer_label(&mut painter, i);
